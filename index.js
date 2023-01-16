@@ -13,7 +13,7 @@ app.get('/', async (req, res) => {
 })
 
 
-app.get('team', async (req, res)=>{
+app.get('/team', async (req, res)=>{
     res.send('Team Tech Airme')
 })
 
