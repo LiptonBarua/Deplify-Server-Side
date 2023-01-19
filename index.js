@@ -34,4 +34,8 @@ app.get('/', async (req, res) => {
 })
 
 
+app.get('/team', async (req, res)=>{
+    res.send('Team Tech Airme')
+})
+
 app.listen(port, () => console.log(`deplefy running on ${port}`));
