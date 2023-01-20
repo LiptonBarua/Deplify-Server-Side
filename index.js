@@ -36,7 +36,7 @@ socket.on("reactEvent", (data) => {
 });
 });
 
-app.get('/team', async (req, res)=>{
+app.get('/teams', async (req, res)=>{
     res.send('Team Tech Airme')
 
 })
