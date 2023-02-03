@@ -66,6 +66,7 @@ async function run() {
     try {
         const usersCollection = client.db('deplify').collection('users');
         const paymentsCollection = client.db('deplify').collection('payments');
+
         //Note: make sure verify Admin after verify JWT
         const verifyAdmin = async (req, res, next) => {
             console.log('Inside verifyAdmin', req.decoded.email)
@@ -79,7 +80,7 @@ async function run() {
             next()
         }
 
-        //Getting JWT TOken 
+        // //Getting JWT TOken 
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
@@ -153,7 +154,12 @@ async function run() {
             const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
             res.send(result);
         })
-
+        app.get('/updateUser', async (req, res)=>{
+            const email= req.query.email;
+            const query= {email: email}
+            const result= await usersCollection.findOne(query)
+            res.send(result)
+        })
 
    
     }
