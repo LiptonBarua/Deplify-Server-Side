@@ -4,7 +4,7 @@ const http= require("http")
 const app= express();
 const cors = require("cors")
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port =9000 || process.env.PORT;
 app.use(cors())
@@ -66,6 +66,11 @@ async function run() {
     try {
         const usersCollection = client.db('deplify').collection('users');
         const paymentsCollection = client.db('deplify').collection('payments');
+        const mydetailsCollection = client.db('deplify').collection('myDetails') 
+     
+     
+     
+     
         //Note: make sure verify Admin after verify JWT
         const verifyAdmin = async (req, res, next) => {
             console.log('Inside verifyAdmin', req.decoded.email)
@@ -105,7 +110,7 @@ async function run() {
             const result = await usersCollection.insertOne(user);
             res.send(result);
         });
-        app.patch('/user/:id', async (req, res) => {
+        app.patch('/users/:id', async (req, res) => {
             const id = req.params.id;
             const status = req.body.status
             const query = { _id: ObjectId(id) }
@@ -137,6 +142,40 @@ async function run() {
                 clientSecret: paymentIntent.client_secret,
             });
         });
+
+        // Admin 
+
+        app.delete('/users/:id',async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await usersCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+
+        //Make Admin 
+        app.put('/users/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    role: 'admin'
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+
+        // getAmin 
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({ isAdmin: user?.role === 'admin' });
+        })
+
+
 
 
         app.post('/payments', async (req, res) => {
