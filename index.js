@@ -64,6 +64,7 @@ async function run() {
     try {
         const usersCollection = client.db('deplify').collection('users');
         const paymentsCollection = client.db('deplify').collection('payments');
+        const addNewSiteCollection = client.db('deplify').collection('addNewSite');
 
         //Note: make sure verify Admin after verify JWT
         const verifyAdmin = async (req, res, next) => {
@@ -191,6 +192,17 @@ async function run() {
         })
 
    
+
+
+      app.post('/addNewSite', async (req, res)=>{
+          const addSiteData=req.body
+          const result= await addNewSiteCollection.insertOne(addSiteData)
+          res.send(result)
+      })
+
+
+
+
     }
     finally {
 
