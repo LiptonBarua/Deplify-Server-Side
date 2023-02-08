@@ -201,7 +201,12 @@ async function run() {
       })
 
 
-
+     app.get('/addNewSite', async (req, res)=>{
+         const filter={}
+         const result= await addNewSiteCollection.find(filter).toArray()
+         console.log(result)
+         res.send(result)
+     })
 
     }
     finally {
