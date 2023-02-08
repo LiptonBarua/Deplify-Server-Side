@@ -126,14 +126,14 @@ async function run() {
         app.put('/profile', async (req, res) => {
             const userEmail = req.query.email;
             const file = req.body;
-            const{email,phone,team,image,name,country,location}=file;
+            const{email,phone,image,name,country,location}=file;
 
             const filter={email: userEmail};
             
             const option= {upsert:true}
             const updatedDoc = {
                 $set: {
-                    email,phone,team,image,name,country,location
+                    email,phone,image,name,country,location
                 }
             }
             const result = await usersCollection.updateOne(filter, updatedDoc, option)
