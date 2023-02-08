@@ -1,17 +1,17 @@
 
 const express = require('express');
-const http= require("http")
-const app= express();
+const http = require("http")
+const app = express();
 const cors = require("cors")
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const port =9000 || process.env.PORT;
+const port = 9000 || process.env.PORT;
 app.use(cors())
 app.use(express.json());
 require('dotenv').config();
 
-const httpServer= http.createServer(app);
+const httpServer = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(httpServer, {
     cors: {
@@ -21,18 +21,18 @@ const io = new Server(httpServer, {
 })
 
 io.on("connection", (socket) => {
-  console.log("user is connected");
+    console.log("user is connected");
 
-  socket.on("disconnection", (socket) => {
- console.log("user disconnected")
-});
+    socket.on("disconnection", (socket) => {
+        console.log("user disconnected")
+    });
 
 
-socket.on("reactEvent", (data) => {
-    console.log(data)
-    socket.broadcast.emit("showMessage", data)
-   
-});
+    socket.on("reactEvent", (data) => {
+        console.log(data)
+        socket.broadcast.emit("showMessage", data)
+
+    });
 });
 
 app.get('/', async (req, res) => {
@@ -101,15 +101,15 @@ async function run() {
         });
         app.post('/users', async (req, res) => {
             const user = req.body;
-			const query = { email: user.email };
-			const alreadyExist = await usersCollection.findOne(query);
-			if (alreadyExist) {
-				return;
-			}
-			const result = await usersCollection.insertOne(user);
-			res.send(result)
+            const query = { email: user.email };
+            const alreadyExist = await usersCollection.findOne(query);
+            if (alreadyExist) {
+                return;
+            }
+            const result = await usersCollection.insertOne(user);
+            res.send(result)
         });
-        
+
         app.patch('/user/:id', async (req, res) => {
             const id = req.params.id;
             const status = req.body.status
@@ -126,30 +126,57 @@ async function run() {
         app.put('/profile', async (req, res) => {
             const userEmail = req.query.email;
             const file = req.body;
-            const{email,phone,image,name,country,location}=file;
+            const { email, phone, image, name, country, location } = file;
 
-            const filter={email: userEmail};
-            
-            const option= {upsert:true}
+            const filter = { email: userEmail };
+
+            const option = { upsert: true }
             const updatedDoc = {
                 $set: {
-                    email,phone,image,name,country,location
+                    email, phone, image, name, country, location
                 }
             }
             const result = await usersCollection.updateOne(filter, updatedDoc, option)
             res.send(result)
         })
 
-        app.get('/profile', async(req, res)=>{
-             let query = {}
-      if(req.query.email){
-        query={
-            email: req.query.email
-        }
-      }
-            const result= await usersCollection.find(query).toArray();
+        app.get('/profile', async (req, res) => {
+            let query = {}
+            if (req.query.email) {
+                query = {
+                    email: req.query.email
+                }
+            }
+            const result = await usersCollection.find(query).toArray();
             res.send(result)
         })
+
+        app.put('/team', async (req, res) => {
+            const userEmail = req.query.email;
+            const data = req.body;
+            const { teamName, email, name, logo, current } = data;
+            const filter = { email: userEmail }
+            const option = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    teamName, email, name, logo, current
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, option)
+            res.send(result)
+        })
+
+        app.get('/team', async(req, res)=>{
+            const query={}
+            if(req.query.email){
+             query={
+                email:req.query.email
+             }
+            }
+          const result = await usersCollection.find(query).toArray();
+          res.send(result)
+        })
+  
         //payment Stipes 
 
         app.post('/create-payment-intent', async (req, res) => {
@@ -184,29 +211,29 @@ async function run() {
             const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
             res.send(result);
         })
-        app.get('/updateUser', async (req, res)=>{
-            const email= req.query.email;
-            const query= {email: email}
-            const result= await usersCollection.findOne(query)
+        app.get('/updateUser', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const result = await usersCollection.findOne(query)
             res.send(result)
         })
 
-   
 
 
-      app.post('/addNewSite', async (req, res)=>{
-          const addSiteData=req.body
-          const result= await addNewSiteCollection.insertOne(addSiteData)
-          res.send(result)
-      })
+
+        app.post('/addNewSite', async (req, res) => {
+            const addSiteData = req.body
+            const result = await addNewSiteCollection.insertOne(addSiteData)
+            res.send(result)
+        })
 
 
-     app.get('/addNewSite', async (req, res)=>{
-         const filter={}
-         const result= await addNewSiteCollection.find(filter).toArray()
-         console.log(result)
-         res.send(result)
-     })
+        app.get('/addNewSite', async (req, res) => {
+            const filter = {}
+            const result = await addNewSiteCollection.find(filter).toArray()
+            console.log(result)
+            res.send(result)
+        })
 
     }
     finally {
