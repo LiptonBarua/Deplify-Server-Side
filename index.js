@@ -27,10 +27,7 @@ io.on("connection", (socket) => {
  console.log("user disconnected")
 });
 
-// socket.on("chatEvent", (data) => {
-//     console.log(data)
-//     io.emit("chatShow", data);
-// });
+
 socket.on("reactEvent", (data) => {
     console.log(data)
     socket.broadcast.emit("showMessage", data)
@@ -38,10 +35,11 @@ socket.on("reactEvent", (data) => {
 });
 });
 
-app.get('/teams', async (req, res)=>{
-    res.send('Team Tech Airme')
-
+app.get('/', async (req, res) => {
+    res.send('deplefy server is running');
 })
+
+
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -102,10 +100,15 @@ async function run() {
         });
         app.post('/users', async (req, res) => {
             const user = req.body;
-            console.log(user);
-            const result = await usersCollection.insertOne(user);
-            res.send(result);
+			const query = { email: user.email };
+			const alreadyExist = await usersCollection.findOne(query);
+			if (alreadyExist) {
+				return;
+			}
+			const result = await usersCollection.insertOne(user);
+			res.send(result)
         });
+        
         app.patch('/user/:id', async (req, res) => {
             const id = req.params.id;
             const status = req.body.status
@@ -119,7 +122,33 @@ async function run() {
             res.send(result)
         })
 
+        app.put('/profile', async (req, res) => {
+            const userEmail = req.query.email;
+            const file = req.body;
+            const{email,phone,team,image,name}=file;
 
+            const filter={email: userEmail};
+            
+            const option= {upsert:true}
+            const updatedDoc = {
+                $set: {
+                   email,phone,team,image,name
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, option)
+            res.send(result)
+        })
+
+        app.get('/profile', async(req, res)=>{
+             let query = {}
+      if(req.query.email){
+        query={
+            email: req.query.email
+        }
+      }
+            const result= await usersCollection.find(query).toArray();
+            res.send(result)
+        })
         //payment Stipes 
 
         app.post('/create-payment-intent', async (req, res) => {
@@ -173,9 +202,7 @@ run().catch(console.dir);
 
 
 
-app.get('/', async (req, res) => {
-    res.send('deplefy server is running');
-})
+
 
 
 
