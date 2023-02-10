@@ -170,9 +170,6 @@ async function run() {
             res.send({ isAdmin: user?.role === 'admin' });
         })
 
-
-
-
         app.post('/payments', async (req, res) => {
             const payment = req.body;
             const result = await paymentsCollection.insertOne(payment);
