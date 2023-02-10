@@ -1,17 +1,17 @@
 
 const express = require('express');
-const http= require("http")
-const app= express();
+const http = require("http")
+const app = express();
 const cors = require("cors")
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const port =9000 || process.env.PORT;
+const port = 9000 || process.env.PORT;
 app.use(cors())
 app.use(express.json());
 require('dotenv').config();
 
-const httpServer= http.createServer(app);
+const httpServer = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(httpServer, {
     cors: {
@@ -21,27 +21,25 @@ const io = new Server(httpServer, {
 })
 
 io.on("connection", (socket) => {
-  console.log("user is connected");
+    console.log("user is connected");
 
-  socket.on("disconnection", (socket) => {
- console.log("user disconnected")
+    socket.on("disconnection", (socket) => {
+        console.log("user disconnected")
+    });
+
+
+    socket.on("reactEvent", (data) => {
+        console.log(data)
+        socket.broadcast.emit("showMessage", data)
+
+    });
 });
 
-// socket.on("chatEvent", (data) => {
-//     console.log(data)
-//     io.emit("chatShow", data);
-// });
-socket.on("reactEvent", (data) => {
-    console.log(data)
-    socket.broadcast.emit("showMessage", data)
-   
-});
-});
-
-app.get('/teams', async (req, res)=>{
-    res.send('Team Tech Airme')
-
+app.get('/', async (req, res) => {
+    res.send('deplefy server is running');
 })
+
+
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -66,6 +64,7 @@ async function run() {
     try {
         const usersCollection = client.db('deplify').collection('users');
         const paymentsCollection = client.db('deplify').collection('payments');
+
         //Note: make sure verify Admin after verify JWT
         const verifyAdmin = async (req, res, next) => {
             console.log('Inside verifyAdmin', req.decoded.email)
@@ -101,11 +100,15 @@ async function run() {
         });
         app.post('/users', async (req, res) => {
             const user = req.body;
-            console.log(user);
+            const query = { email: user.email };
+            const alreadyExist = await usersCollection.findOne(query);
+            if (alreadyExist) {
+                return;
+            }
             const result = await usersCollection.insertOne(user);
-            res.send(result);
+            res.send(result)
         });
-        app.patch('/users/:id', async (req, res) => {
+        app.patch('/user/:id', async (req, res) => {
             const id = req.params.id;
             const status = req.body.status
             const query = { _id: ObjectId(id) }
@@ -118,7 +121,60 @@ async function run() {
             res.send(result)
         })
 
+        app.put('/profile', async (req, res) => {
+            const userEmail = req.query.email;
+            const file = req.body;
+            const { email, phone, image, name, country, location } = file;
 
+            const filter = { email: userEmail };
+
+            const option = { upsert: true }
+            const updatedDoc = {
+                $set: {
+                    email, phone, image, name, country, location
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, option)
+            res.send(result)
+        })
+
+        app.get('/profile', async (req, res) => {
+            let query = {}
+            if (req.query.email) {
+                query = {
+                    email: req.query.email
+                }
+            }
+            const result = await usersCollection.find(query).toArray();
+            res.send(result)
+        })
+
+        app.put('/team', async (req, res) => {
+            const userEmail = req.query.email;
+            const data = req.body;
+            const { teamName, email, name, logo, current } = data;
+            const filter = { email: userEmail }
+            const option = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    teamName, email, name, logo, current
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, option)
+            res.send(result)
+        })
+
+        app.get('/team', async(req, res)=>{
+            const query={}
+            if(req.query.email){
+             query={
+                email:req.query.email
+             }
+            }
+          const result = await usersCollection.find(query).toArray();
+          res.send(result)
+        })
+  
         //payment Stipes 
 
         app.post('/create-payment-intent', async (req, res) => {
@@ -161,23 +217,13 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
             res.send(result);
         })
-
-        // getAmin 
-        app.get('/users/admin/:email', async (req, res) => {
-            const email = req.params.email;
-            const query = { email }
-            const user = await usersCollection.findOne(query);
-            res.send({ isAdmin: user?.role === 'admin' });
-        })
-
-    //Updata User 
         app.get('/updateUser', async (req, res)=>{
             const email= req.query.email;
             const query= {email: email}
             const result= await usersCollection.findOne(query)
             res.send(result)
         })
-        
+
    
     }
     finally {
@@ -190,9 +236,7 @@ run().catch(console.dir);
 
 
 
-app.get('/', async (req, res) => {
-    res.send('deplefy server is running');
-})
+
 
 
 
