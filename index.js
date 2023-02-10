@@ -170,27 +170,14 @@ async function run() {
             res.send({ isAdmin: user?.role === 'admin' });
         })
 
-        app.post('/payments', async (req, res) => {
-            const payment = req.body;
-            const result = await paymentsCollection.insertOne(payment);
-            const id = payment.bookingId
-            const filter = { _id: ObjectId(id) }
-            const updatedDoc = {
-                $set: {
-                    paid: true,
-                    transactionId: payment.transactionId
-                }
-            }
-            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
-            res.send(result);
-        })
+    //Updata User 
         app.get('/updateUser', async (req, res)=>{
             const email= req.query.email;
             const query= {email: email}
             const result= await usersCollection.findOne(query)
             res.send(result)
         })
-
+        
    
     }
     finally {
