@@ -3,7 +3,7 @@ const express = require('express');
 const app = express();
 const cors = require("cors")
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = 9000 || process.env.PORT;
 app.use(cors())
@@ -42,7 +42,6 @@ async function run() {
         const usersCollection = client.db('deplify').collection('users');
         const pricingCollection = client.db('deplify').collection('pricingCollection');
         const paymentsCollection = client.db('deplify').collection('payments');
-        const addNewSiteCollection = client.db('deplify').collection('addNewSite');
 
         //Note: make sure verify Admin after verify JWT
         const verifyAdmin = async (req, res, next) => {
@@ -87,7 +86,6 @@ async function run() {
             const result = await usersCollection.insertOne(user);
             res.send(result)
         });
-
         app.patch('/user/:id', async (req, res) => {
             const id = req.params.id;
             const status = req.body.status
@@ -163,6 +161,7 @@ async function run() {
           const result = await usersCollection.find(query).toArray();
           res.send(result)
         })
+<<<<<<< HEAD
 
 
           // ...............Pricing Section.....................
@@ -172,6 +171,40 @@ async function run() {
             res.send(result)
           })
 
+=======
+  
+        
+
+        // Admin 
+
+        app.delete('/users/:id',async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await usersCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+
+        //Make Admin 
+        app.put('/users/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    role: 'admin'
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+        app.get('/updateUser', async (req, res)=>{
+            const email= req.query.email;
+            const query= {email: email}
+            const result= await usersCollection.findOne(query)
+            res.send(result)
+        })
+>>>>>>> 4adfbb0cac1feceeb4a61e26eee687f1cc326071
         //payment Stipes 
 
         app.post('/create-payment-intent', async (req, res) => {
@@ -206,30 +239,7 @@ async function run() {
             const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
             res.send(result);
         })
-        app.get('/updateUser', async (req, res) => {
-            const email = req.query.email;
-            const query = { email: email }
-            const result = await usersCollection.findOne(query)
-            res.send(result)
-        })
-
-
-
-
-        app.post('/addNewSite', async (req, res) => {
-            const addSiteData = req.body
-            const result = await addNewSiteCollection.insertOne(addSiteData)
-            res.send(result)
-        })
-
-
-        app.get('/addNewSite', async (req, res) => {
-            const filter = {}
-            const result = await addNewSiteCollection.find(filter).toArray()
-            console.log(result)
-            res.send(result)
-        })
-
+   
     }
     finally {
 
