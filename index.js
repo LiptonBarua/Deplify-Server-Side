@@ -161,7 +161,6 @@ async function run() {
           const result = await usersCollection.find(query).toArray();
           res.send(result)
         })
-<<<<<<< HEAD
 
 
           // ...............Pricing Section.....................
@@ -171,7 +170,6 @@ async function run() {
             res.send(result)
           })
 
-=======
   
         
 
@@ -204,7 +202,8 @@ async function run() {
             const result= await usersCollection.findOne(query)
             res.send(result)
         })
->>>>>>> 4adfbb0cac1feceeb4a61e26eee687f1cc326071
+
+        
         //payment Stipes 
 
         app.post('/create-payment-intent', async (req, res) => {
