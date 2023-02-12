@@ -1,6 +1,5 @@
 
 const express = require('express');
-const http = require("http")
 const app = express();
 const cors = require("cors")
 const jwt = require('jsonwebtoken');
@@ -8,32 +7,10 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = 9000 || process.env.PORT;
 app.use(cors())
+
+
 app.use(express.json());
 require('dotenv').config();
-
-const httpServer = http.createServer(app);
-const { Server } = require("socket.io");
-const io = new Server(httpServer, {
-    cors: {
-        origin: '*',
-        methods: ["GET", "POST"],
-    }
-})
-
-io.on("connection", (socket) => {
-    console.log("user is connected");
-
-    socket.on("disconnection", (socket) => {
-        console.log("user disconnected")
-    });
-
-
-    socket.on("reactEvent", (data) => {
-        console.log(data)
-        socket.broadcast.emit("showMessage", data)
-
-    });
-});
 
 app.get('/', async (req, res) => {
     res.send('deplefy server is running');
@@ -63,6 +40,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const usersCollection = client.db('deplify').collection('users');
+        const pricingCollection = client.db('deplify').collection('pricingCollection');
         const paymentsCollection = client.db('deplify').collection('payments');
         const addNewSiteCollection = client.db('deplify').collection('addNewSite');
 
@@ -123,6 +101,8 @@ async function run() {
             res.send(result)
         })
 
+     // ...............Profile Section.....................
+
         app.put('/profile', async (req, res) => {
             const userEmail = req.query.email;
             const file = req.body;
@@ -140,6 +120,9 @@ async function run() {
             res.send(result)
         })
 
+
+
+
         app.get('/profile', async (req, res) => {
             let query = {}
             if (req.query.email) {
@@ -150,6 +133,10 @@ async function run() {
             const result = await usersCollection.find(query).toArray();
             res.send(result)
         })
+
+
+        // ...............Team Section.....................
+
 
         app.put('/team', async (req, res) => {
             const userEmail = req.query.email;
@@ -176,7 +163,15 @@ async function run() {
           const result = await usersCollection.find(query).toArray();
           res.send(result)
         })
-  
+
+
+          // ...............Pricing Section.....................
+          app.get('/pricing', async(req,res)=>{
+            const query={};
+            const result= await pricingCollection.find(query).toArray();
+            res.send(result)
+          })
+
         //payment Stipes 
 
         app.post('/create-payment-intent', async (req, res) => {
@@ -243,16 +238,6 @@ async function run() {
 run().catch(console.dir);
 
 
-
-
-
-
-
-
-
-
-
-
-httpServer.listen(port, () => {
+app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
