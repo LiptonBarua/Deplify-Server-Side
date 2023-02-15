@@ -64,7 +64,7 @@ async function run() {
     try {
         const usersCollection = client.db('deplify').collection('users');
         const paymentsCollection = client.db('deplify').collection('payments');
-
+        const bookingsCollection = client.db('deplify').collection('bookings');
         //Note: make sure verify Admin after verify JWT
         const verifyAdmin = async (req, res, next) => {
             console.log('Inside verifyAdmin', req.decoded.email)
@@ -206,6 +206,54 @@ async function run() {
             const result= await usersCollection.findOne(query)
             res.send(result)
         })
+        
+
+        app.get('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const booking = await bookingsCollection.findOne(query)
+            res.send(booking)
+        })
+        //Getting booking Data : 
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const bookings = await bookingsCollection.find(query).toArray()
+            res.send(bookings)
+        })
+
+
+
+
+        //Sending Booking data to Server 
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            console.log(booking);
+            const query = {
+                email: booking.userEmail,
+                name: booking.productName,
+                paid: booking.paid
+            }
+            // console.log(query)
+            const alreadyBooked = await bookingsCollection.find(query).toArray();
+            if (alreadyBooked.length) {
+                const message = `You already have a booking on ${booking.name}`
+                return res.send({ acknowledged: false, message })
+            }
+            const result = await bookingsCollection.insertOne(booking);
+            res.send(result);
+        });
+        app.delete('/bookings``/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await wishCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+
+
+
+
         //payment Stipes 
 
         app.post('/create-payment-intent', async (req, res) => {
