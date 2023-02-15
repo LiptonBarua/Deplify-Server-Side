@@ -1,5 +1,6 @@
 
 const express = require('express');
+const http = require("http")
 const app = express();
 const cors = require("cors")
 const jwt = require('jsonwebtoken');
@@ -7,10 +8,32 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = 9000 || process.env.PORT;
 app.use(cors())
-
-
 app.use(express.json());
 require('dotenv').config();
+
+const httpServer = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(httpServer, {
+    cors: {
+        origin: '*',
+        methods: ["GET", "POST"],
+    }
+})
+
+io.on("connection", (socket) => {
+    console.log("user is connected");
+
+    socket.on("disconnection", (socket) => {
+        console.log("user disconnected")
+    });
+
+
+    socket.on("reactEvent", (data) => {
+        console.log(data)
+        socket.broadcast.emit("showMessage", data)
+
+    });
+});
 
 app.get('/', async (req, res) => {
     res.send('deplefy server is running');
@@ -40,9 +63,8 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const usersCollection = client.db('deplify').collection('users');
-        const pricingCollection = client.db('deplify').collection('pricingCollection');
         const paymentsCollection = client.db('deplify').collection('payments');
-
+        const bookingsCollection = client.db('deplify').collection('bookings');
         //Note: make sure verify Admin after verify JWT
         const verifyAdmin = async (req, res, next) => {
             console.log('Inside verifyAdmin', req.decoded.email)
@@ -99,8 +121,6 @@ async function run() {
             res.send(result)
         })
 
-     // ...............Profile Section.....................
-
         app.put('/profile', async (req, res) => {
             const userEmail = req.query.email;
             const file = req.body;
@@ -118,9 +138,6 @@ async function run() {
             res.send(result)
         })
 
-
-
-
         app.get('/profile', async (req, res) => {
             let query = {}
             if (req.query.email) {
@@ -131,10 +148,6 @@ async function run() {
             const result = await usersCollection.find(query).toArray();
             res.send(result)
         })
-
-
-        // ...............Team Section.....................
-
 
         app.put('/team', async (req, res) => {
             const userEmail = req.query.email;
@@ -161,15 +174,6 @@ async function run() {
           const result = await usersCollection.find(query).toArray();
           res.send(result)
         })
-
-
-          // ...............Pricing Section.....................
-          app.get('/pricing', async(req,res)=>{
-            const query={};
-            const result= await pricingCollection.find(query).toArray();
-            res.send(result)
-          })
-
   
         
 
@@ -202,6 +206,54 @@ async function run() {
             const result= await usersCollection.findOne(query)
             res.send(result)
         })
+        
+
+        app.get('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const booking = await bookingsCollection.findOne(query)
+            res.send(booking)
+        })
+        //Getting booking Data : 
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const bookings = await bookingsCollection.find(query).toArray()
+            res.send(bookings)
+        })
+
+
+
+
+        //Sending Booking data to Server 
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            console.log(booking);
+            const query = {
+                email: booking.userEmail,
+                name: booking.productName,
+                paid: booking.paid
+            }
+            // console.log(query)
+            const alreadyBooked = await bookingsCollection.find(query).toArray();
+            if (alreadyBooked.length) {
+                const message = `You already have a booking on ${booking.name}`
+                return res.send({ acknowledged: false, message })
+            }
+            const result = await bookingsCollection.insertOne(booking);
+            res.send(result);
+        });
+        app.delete('/bookings``/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await wishCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+
+
+
+
         //payment Stipes 
 
         app.post('/create-payment-intent', async (req, res) => {
@@ -236,22 +288,6 @@ async function run() {
             const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
             res.send(result);
         })
-
-
-        // .......................Site Data.......................
-
-        app.post('/addNewSite', async (req, res)=>{
-            const addSiteData=req.body
-            const result= await addNewSiteCollection.insertOne(addSiteData)
-            res.send(result)
-        })
-
-        app.get('/addNewSite', async (req, res)=>{
-            const filter={}
-            const result= await addNewSiteCollection.find(filter).toArray()
-            console.log(result)
-            res.send(result)
-        })
    
     }
     finally {
@@ -261,6 +297,16 @@ async function run() {
 run().catch(console.dir);
 
 
-app.listen(port, () => {
+
+
+
+
+
+
+
+
+
+
+httpServer.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
