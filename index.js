@@ -65,6 +65,8 @@ async function run() {
         const usersCollection = client.db('deplify').collection('users');
         const paymentsCollection = client.db('deplify').collection('payments');
         const bookingsCollection = client.db('deplify').collection('bookings');
+        const pricingCollection = client.db('deplify').collection('pricingCollection');
+        const addNewSiteCollection = client.db('deplify').collection('addNewSite');
         //Note: make sure verify Admin after verify JWT
         const verifyAdmin = async (req, res, next) => {
             console.log('Inside verifyAdmin', req.decoded.email)
@@ -149,6 +151,9 @@ async function run() {
             res.send(result)
         })
 
+        // ...............Team Section.....................
+
+
         app.put('/team', async (req, res) => {
             const userEmail = req.query.email;
             const data = req.body;
@@ -164,17 +169,25 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/team', async(req, res)=>{
-            const query={}
-            if(req.query.email){
-             query={
-                email:req.query.email
-             }
+        app.get('/team', async (req, res) => {
+            const query = {}
+            if (req.query.email) {
+                query = {
+                    email: req.query.email
+                }
             }
-          const result = await usersCollection.find(query).toArray();
-          res.send(result)
+            const result = await usersCollection.find(query).toArray();
+            res.send(result)
         })
+
   
+
+        // ...............Pricing Section.....................
+        app.get('/pricing', async (req, res) => {
+            const query = {};
+            const result = await pricingCollection.find(query).toArray();
+            res.send(result)
+        })
         
 
         // Admin 
@@ -287,6 +300,20 @@ async function run() {
             }
             const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
             res.send(result);
+        })
+        // .......................Site Data.......................
+
+        app.post('/addNewSite', async (req, res) => {
+            const addSiteData = req.body
+            const result = await addNewSiteCollection.insertOne(addSiteData)
+            res.send(result)
+        })
+
+        app.get('/addNewSite', async (req, res) => {
+            const filter = {}
+            const result = await addNewSiteCollection.find(filter).toArray()
+            console.log(result)
+            res.send(result)
         })
    
     }
