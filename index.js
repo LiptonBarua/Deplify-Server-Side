@@ -5,35 +5,15 @@ const app = express();
 const cors = require("cors")
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = 9000 || process.env.PORT;
-app.use(cors())
+app.use(cors({
+    origin: ['http://localhost:3000', 'https://team-work-deplefy-client-two.vercel.app'], 
+    // methods: ['GET', 'POST','PUT','PATCH','DELETE']
+}))
 app.use(express.json());
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// const httpServer = http.createServer(app);
-// const { Server } = require("socket.io");
-// const io = new Server(httpServer, {
-//     cors: {
-//         origin: '*',
-//         methods: ["GET", "POST"],
-//     }
-// })
-
-// io.on("connection", (socket) => {
-//     console.log("user is connected");
-
-//     socket.on("disconnection", (socket) => {
-//         console.log("user disconnected")
-//     });
-
-
-//     socket.on("reactEvent", (data) => {
-//         console.log(data)
-//         socket.broadcast.emit("showMessage", data)
-
-//     });
-// });
 
 app.get('/', async (req, res) => {
     res.send('deplefy server is running');
@@ -67,6 +47,8 @@ async function run() {
         const bookingsCollection = client.db('deplify').collection('bookings');
         const pricingCollection = client.db('deplify').collection('pricingCollection');
         const addNewSiteCollection = client.db('deplify').collection('addNewSite');
+
+
         //Note: make sure verify Admin after verify JWT
         const verifyAdmin = async (req, res, next) => {
             console.log('Inside verifyAdmin', req.decoded.email)
@@ -188,6 +170,13 @@ async function run() {
             const result = await pricingCollection.find(query).toArray();
             res.send(result)
         })
+
+        app.get('/pricing/:id', async(req, res)=>{
+            const id= req.params.id;
+            const query={_id:ObjectId(id)}
+            const result= await pricingCollection.findOne(query);
+            res.send(result)
+        })
         
 
         // Admin 
@@ -271,7 +260,7 @@ async function run() {
 
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
-            const price = booking.price;
+            const price = booking.money;
             const amount = price * 100;
 
             const paymentIntent = await stripe.paymentIntents.create({
@@ -290,7 +279,7 @@ async function run() {
         app.post('/payments', async (req, res) => {
             const payment = req.body;
             const result = await paymentsCollection.insertOne(payment);
-            const id = payment.bookingId
+            const id = payment.pricingPlanData;
             const filter = { _id: ObjectId(id) }
             const updatedDoc = {
                 $set: {
@@ -298,7 +287,7 @@ async function run() {
                     transactionId: payment.transactionId
                 }
             }
-            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
+            const updatedResult = await pricingCollection.updateOne(filter, updatedDoc)
             res.send(result);
         })
         // .......................Site Data.......................
