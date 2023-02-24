@@ -323,8 +323,16 @@ async function run() {
         })
 
 
-        // user all Domain name Database work 
-        
+
+
+        //...............user all Domain name Database work.................
+
+        app.post('/userDomainName', async (req, res)=>{
+             const body= req.body;
+             console.log(body)
+             const result= await userDomainCollection.insertOne(body)
+             res.send(result)
+        })
    
     }
     finally {
