@@ -333,6 +333,20 @@ async function run() {
              const result= await userDomainCollection.insertOne(body)
              res.send(result)
         })
+
+        app.patch('/transferDomain/:email', async (req, res)=>{
+            const body= req.body;
+            const email= req.params.email;
+            const filter= {email: email}
+            const updatedDoc={
+                $set:{
+                    myDomain : body.transferInput
+                }
+            }
+
+            const result = await userDomainCollection.updateMany(filter, updatedDoc)
+            res.send(result)
+        })
    
     }
     finally {
