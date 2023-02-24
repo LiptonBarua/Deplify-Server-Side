@@ -8,7 +8,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = 9000 || process.env.PORT;
 app.use(cors({
     origin: ['http://localhost:3000', 'https://team-work-deplefy-client-two.vercel.app'], 
-    // methods: ['GET', 'POST','PUT','PATCH','DELETE']
+    methods: ['GET', 'POST','PUT','PATCH','DELETE']
 }))
 app.use(express.json());
 require('dotenv').config();
@@ -300,12 +300,13 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/payments', async (req, res) => {
-            const email = req.query.email;
-            const query = { email: email }
-            const bookings = await paymentsCollection.find(query).toArray()
-            res.send(bookings)
+        app.get('/payments', async(req, res)=>{
+            const email=req.query.email;
+            const query={email:email}
+            const result= await paymentsCollection.find(query).toArray();
+            res.send(result)
         })
+
         // .......................Site Data.......................
 
         app.post('/addNewSite', async (req, res) => {
