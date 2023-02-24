@@ -105,17 +105,25 @@ async function run() {
             res.send(result)
         })
 
+
+        app.get('/users/:email', async(req, res)=>{
+            const data= req.params.email;
+            const filter={email:data}
+            const result= await usersCollection.findOne(filter);
+            res.send(result)
+        })
+
         app.put('/profile', async (req, res) => {
             const userEmail = req.query.email;
             const file = req.body;
-            const { email, phone, image, name, country, location } = file;
+            const { email, phone,positionData,image, name, country, location } = file;
 
             const filter = { email: userEmail };
 
             const option = { upsert: true }
             const updatedDoc = {
                 $set: {
-                    email, phone, image, name, country, location
+                    email, phone, positionData, image, name, country, location
                 }
             }
             const result = await usersCollection.updateOne(filter, updatedDoc, option)
@@ -150,6 +158,7 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updatedDoc, option)
             res.send(result)
         })
+    
 
         app.get('/team', async (req, res) => {
             const query = {}
@@ -289,6 +298,13 @@ async function run() {
             }
             const updatedResult = await pricingCollection.updateOne(filter, updatedDoc)
             res.send(result);
+        })
+
+        app.get('/payments', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const bookings = await paymentsCollection.find(query).toArray()
+            res.send(bookings)
         })
         // .......................Site Data.......................
 
