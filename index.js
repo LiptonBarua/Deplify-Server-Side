@@ -47,6 +47,7 @@ async function run() {
         const bookingsCollection = client.db('deplify').collection('bookings');
         const pricingCollection = client.db('deplify').collection('pricingCollection');
         const addNewSiteCollection = client.db('deplify').collection('addNewSite');
+        const userDomainCollection = client.db('deplify').collection('usersDomain')
 
 
         //Note: make sure verify Admin after verify JWT
@@ -320,6 +321,10 @@ async function run() {
             console.log(result)
             res.send(result)
         })
+
+
+        // user all Domain name Database work 
+        
    
     }
     finally {
