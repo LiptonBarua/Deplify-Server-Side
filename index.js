@@ -347,6 +347,14 @@ async function run() {
             const result = await userDomainCollection.updateMany(filter, updatedDoc)
             res.send(result)
         })
+
+
+        app.get('/myDomain/:email', async (req, res)=>{
+            const email= req.params.email
+            const filter= {email: email}
+            const result= await userDomainCollection.findOne(filter)
+            res.send(result)
+        })
    
     }
     finally {
