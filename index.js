@@ -47,6 +47,7 @@ async function run() {
         const bookingsCollection = client.db('deplify').collection('bookings');
         const pricingCollection = client.db('deplify').collection('pricingCollection');
         const addNewSiteCollection = client.db('deplify').collection('addNewSite');
+        const userDomainCollection = client.db('deplify').collection('usersDomain')
 
 
         //Note: make sure verify Admin after verify JWT
@@ -319,6 +320,40 @@ async function run() {
             const filter = {}
             const result = await addNewSiteCollection.find(filter).toArray()
             console.log(result)
+            res.send(result)
+        })
+
+
+
+
+        //...............user all Domain name Database work.................
+
+        app.post('/userDomainName', async (req, res)=>{
+             const body= req.body;
+             console.log(body)
+             const result= await userDomainCollection.insertOne(body)
+             res.send(result)
+        })
+
+        app.patch('/transferDomain/:email', async (req, res)=>{
+            const body= req.body;
+            const email= req.params.email;
+            const filter= {email: email}
+            const updatedDoc={
+                $set:{
+                    myDomain : body.transferInput
+                }
+            }
+
+            const result = await userDomainCollection.updateMany(filter, updatedDoc)
+            res.send(result)
+        })
+
+
+        app.get('/myDomain/:email', async (req, res)=>{
+            const email= req.params.email
+            const filter= {email: email}
+            const result= await userDomainCollection.findOne(filter)
             res.send(result)
         })
    
