@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = 9000 || process.env.PORT;
 app.use(cors({
-    origin: ['http://localhost:3000', 'https://team-work-deplefy-client-two.vercel.app'], 
+    origin: '*', 
     methods: ['GET', 'POST','PUT','PATCH','DELETE']
 }))
 app.use(express.json());
@@ -328,10 +328,19 @@ async function run() {
 
         //...............user all Domain name Database work.................
 
-        app.post('/userDomainName', async (req, res)=>{
-             const body= req.body;
+        app.put('/userDomainName', async (req, res)=>{
+             const userEmail= req.query.email;
+             const body=req.body;
              console.log(body)
-             const result= await userDomainCollection.insertOne(body)
+             const{email, myDomain}=body;
+             const filter={email:userEmail};
+             const option = { upsert: true }
+             const updatedDoc={
+                $set: {
+                    email, myDomain
+             }
+            }
+             const result= await usersCollection.updateOne(filter, updatedDoc, option)
              res.send(result)
         })
 
@@ -345,7 +354,7 @@ async function run() {
                 }
             }
 
-            const result = await userDomainCollection.updateMany(filter, updatedDoc)
+            const result = await usersCollection.updateMany(filter, updatedDoc)
             res.send(result)
         })
 
